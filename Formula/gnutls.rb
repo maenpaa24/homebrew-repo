@@ -61,6 +61,18 @@ class Gnutls < Formula
   end
 
   def install
+    # Fix build failure with Apple Clang.
+    inreplace "lib/crau/crau.h" do |s|
+      s.gsub!(
+        /#\s*ifndef CRAU_MAYBE_UNUSED[\s\S]*?#\s*endif\s*\/\*\s*CRAU_MAYBE_UNUSED\s*\*\//m,
+        <<~EOS,
+          #ifndef CRAU_MAYBE_UNUSED
+          # define CRAU_MAYBE_UNUSED __attribute__((unused))
+          #endif /* CRAU_MAYBE_UNUSED */
+        EOS
+      )
+    end
+
     # DANE support is disabled so GnuTLS does not have an indirect dependency on OpenSSL.
     # If the feature is wanted, then can consider shipping as split `gnutls-dane` formula.
     args = %W[
